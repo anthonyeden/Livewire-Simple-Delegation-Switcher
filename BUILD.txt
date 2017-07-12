@@ -1,0 +1,13 @@
+Simple build instructions:
+------------------------------------------------------------------------
+
+Ensure you have PyInstaller installed
+Ensure you have 32-bit Python 2.7 installed
+
+Delete build/ & dist/
+
+Run: pyinstaller -p libs -i SwitchIcon.ico --version-file=version.py --noconsole --onefile LW-Delegation-Switcher.py
+
+Copy config-sample.json and SwitchIcon.ico into dist/
+
+ZIP up the dist/ folder and distribute as needed
