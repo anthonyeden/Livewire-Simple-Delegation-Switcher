@@ -24,6 +24,9 @@ class Application(tk.Frame):
     # The error message label widget
     errorLabel = None
 
+    # The configurable text to put at the top of the main windows
+    titleLabel = "Livewire Simple Delegation Switcher"
+
     # Store the Livewire Routing Protocol (LWRP) client connection here
     LWRP = None
 
@@ -81,6 +84,9 @@ class Application(tk.Frame):
 
         self.LWRP_IpAddress = config['DeviceIP']
         self.LWRP_OutputChannel = config['DeviceOutputNum']
+
+        if "Title" in config:
+            self.titleLabel = config['Title']
 
         for source in config['Sources']:
             self.LWRP_Sources.append(
@@ -164,7 +170,7 @@ class Application(tk.Frame):
         # Title Label
         titleLabel = tk.Label(
             self,
-            text = "Livewire Simple Delegation Switcher",
+            text = str(self.titleLabel),
             font = ("Arial", 24, "bold"),
             wraplength = 400
         )
