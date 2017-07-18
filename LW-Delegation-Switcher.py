@@ -4,7 +4,7 @@ __author__ = "Anthony Eden"
 __copyright__ = "Copyright 2017, Anthony Eden / Media Realm"
 __credits__ = ["Anthony Eden"]
 __license__ = "GPL"
-__version__ = "1.2"
+__version__ = "1.3"
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/libs")
@@ -89,13 +89,24 @@ class Application(tk.Frame):
             self.titleLabel = config['Title']
 
         for source in config['Sources']:
-            self.LWRP_Sources.append(
-                {
-                    "ButtonLabel": source['Name'],
-                    "LWNumber": int(source['SourceNum']),
-                    "LWMulticastNumber": AxiaLivewireAddressHelper.streamNumToMulticastAddr(source['SourceNum'])
-                }
-            )
+            if source['SourceNum'][:4] == "sip:":
+                self.LWRP_Sources.append(
+                    {
+                        "ButtonLabel": source['Name'],
+                        "LWNumber": None,
+                        "LWMulticastNumber": None,
+                        "LWSipAddress": source['SourceNum']
+                    }
+                )
+            else:
+                self.LWRP_Sources.append(
+                    {
+                        "ButtonLabel": source['Name'],
+                        "LWNumber": int(source['SourceNum']),
+                        "LWMulticastNumber": AxiaLivewireAddressHelper.streamNumToMulticastAddr(source['SourceNum']),
+                        "LWSipAddress": None
+                    }
+                )
         
         return True
     
@@ -142,6 +153,10 @@ class Application(tk.Frame):
     def findOutputLWRP(self, destinationList, destinationNumber):
         # Find the current output stream number for the specified output
         for destination in destinationList:
+            if int(destination['num']) == destinationNumber and destination['attributes']['address'] is not None and destination['attributes']['address'][:4] == "sip:":
+                # The active output, in Livewire SIP format
+                return destination['attributes']['address']
+
             if int(destination['num']) == destinationNumber and destination['attributes']['address'] is not None and "." in destination['attributes']['address']:
                 # The active output, in Multicast IP Address format
                 return AxiaLivewireAddressHelper.multicastAddrToStreamNum(destination['attributes']['address'])
@@ -225,8 +240,11 @@ class Application(tk.Frame):
 
                 self.sourceButtons.append(button)
             
-            if self.LWRP_CurrentOutput == sourceData['LWNumber']:
-                # This channel is currently selected
+            if self.LWRP_CurrentOutput == sourceData['LWSipAddress']:
+                # This channel is currently selected - SIP
+                button.config(bg = "#FF0000", fg = "#FFFFFF")
+            elif sourceData['LWNumber'] is not None and self.LWRP_CurrentOutput == sourceData['LWNumber']:
+                # This channel is currently selected - multicast
                 button.config(bg = "#FF0000", fg = "#FFFFFF")
             else:
                 # This channel is not currently selected
@@ -234,7 +252,10 @@ class Application(tk.Frame):
     
     def sourceBtnPress(self, sourceNum):
         # Immediatly trigger a change to the destination/output
-        self.LWRP.setDestination(self.LWRP_OutputChannel, self.LWRP_Sources[sourceNum]['LWMulticastNumber'])
+        if self.LWRP_Sources[sourceNum]['LWSipAddress'] is not None:
+            self.LWRP.setDestination(self.LWRP_OutputChannel, self.LWRP_Sources[sourceNum]['LWSipAddress'])
+        else:
+            self.LWRP.setDestination(self.LWRP_OutputChannel, self.LWRP_Sources[sourceNum]['LWMulticastNumber'])
     
     def setErrorMessage(self, message = None):
         # Error Message Label

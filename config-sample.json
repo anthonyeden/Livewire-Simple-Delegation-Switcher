@@ -22,6 +22,10 @@
         {
             "Name": "Satellite",
             "SourceNum": "82"
+        },
+        {
+            "Name": "xNode SIP Input",
+            "SourceNum": "sip:2@192.168.0.15"
         }
     ]
 }
