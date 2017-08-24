@@ -4,7 +4,7 @@ __author__ = "Anthony Eden"
 __copyright__ = "Copyright 2017, Anthony Eden / Media Realm"
 __credits__ = ["Anthony Eden"]
 __license__ = "GPL"
-__version__ = "1.3"
+__version__ = "1.4"
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/libs")
