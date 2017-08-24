@@ -6,7 +6,10 @@ Ensure you have 32-bit Python 2.7 installed
 
 Delete build/ & dist/
 
-Run: pyinstaller -p libs -i SwitchIcon.ico --version-file=version.py --noconsole --onefile LW-Delegation-Switcher.py
+Run:
+ - pyinstaller -p libs -i SwitchIcon.ico --version-file=version.py --onefile LW-Delegation-Switcher.py 
+   (rename to LW-Delegation-Switcher-Debug.exe)
+ - pyinstaller -p libs -i SwitchIcon.ico --version-file=version.py --noconsole --onefile LW-Delegation-Switcher.py
 
 Copy config-sample.json and SwitchIcon.ico into dist/
 
