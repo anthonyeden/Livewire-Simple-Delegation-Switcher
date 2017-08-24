@@ -1,6 +1,7 @@
 {
     "Title": "Livewire Simple Delegation Switcher",
     "DeviceIP": "192.168.0.15",
+    "DevicePassword": "",
     "DeviceOutputNum": 1,
     "Sources": [
         {

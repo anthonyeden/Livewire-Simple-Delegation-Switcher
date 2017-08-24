@@ -33,11 +33,12 @@ class Application(tk.Frame):
     # Configuration parameters for the communication with the Device
     LWRP_IpAddress = None
     LWRP_PortNumber = 93
+    LWRP_Password = None
     LWRP_OutputChannel = None
     LWRP_CurrentOutput = None
     LWRP_Sources = []
 
-    
+
 
     def __init__(self, master = None):
         # Setup the application and display window
@@ -84,6 +85,9 @@ class Application(tk.Frame):
 
         self.LWRP_IpAddress = config['DeviceIP']
         self.LWRP_OutputChannel = config['DeviceOutputNum']
+
+        if "DevicePassword" in config and config['DevicePassword'] is not None:
+            self.LWRP_Password = config['DevicePassword']
 
         if "Title" in config:
             self.titleLabel = config['Title']
@@ -137,7 +141,7 @@ class Application(tk.Frame):
             return (False, "Cannot connect to LiveWire device")
         
         try:
-            self.LWRP.login()
+            self.LWRP.login(self.LWRP_Password)
         except Exception, e:
             print "EXCEPTION:", e
             return (False, "Cannot login to device")
