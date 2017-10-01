@@ -3,6 +3,7 @@
     "DeviceIP": "192.168.0.15",
     "DevicePassword": "",
     "DeviceOutputNum": 1,
+    "Columns": 1,
     "Sources": [
         {
             "Name": "Studio A",

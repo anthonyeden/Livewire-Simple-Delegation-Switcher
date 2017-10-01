@@ -39,7 +39,17 @@ class Application(tk.Frame):
     LWRP_CurrentOutput = None
     LWRP_Sources = []
 
+    # How many columns do we want?
+    columnsNum = 1
 
+    # How many buttons in each column?
+    columnButtonsEach = 0
+
+    # How many buttons are in the current column?
+    columnCurrentCount = 0
+
+    # Which column are we currently rendering?
+    columnCurrentNum = 0
 
     def __init__(self, master = None):
         # Setup the application and display window
@@ -112,6 +122,11 @@ class Application(tk.Frame):
                         "LWSipAddress": None
                     }
                 )
+        
+        if "Columns" in config:
+            self.columnNums = int(config['Columns'])
+            self.columnButtonsEach = int(math.ceil(len(self.LWRP_Sources) / self.columnNums))
+            print self.columnButtonsEach
         
         return True
     
@@ -197,6 +212,7 @@ class Application(tk.Frame):
         titleLabel.pack()
         titleLabel.grid(
             column = 0,
+            columnspan = self.columnNums,
             row = 0,
             sticky = ("N", "S", "E", "W"),
             padx = 50,
@@ -218,7 +234,7 @@ class Application(tk.Frame):
         # Update the status of all the source buttons on screen
 
         for sourceNum, sourceData in enumerate(self.LWRP_Sources):
-            self.top.rowconfigure(sourceNum + 1, weight = 1, pad = 20)
+            self.top.rowconfigure(self.columnCurrentCount + 1, weight = 1, pad = 20)
             
             if sourceNum in self.sourceButtons:
                 # Modify an existing button
@@ -236,12 +252,18 @@ class Application(tk.Frame):
 
                 # Assign the button to the grid
                 button.grid(
-                    column = 0,
-                    row = sourceNum + 1,
+                    column = self.columnCurrentNum,
+                    row = self.columnCurrentCount + 1,
                     sticky = ("N", "S", "E", "W"),
                     padx = 50,
                     pady = 5
                 )
+
+                self.columnCurrentCount += 1
+
+                if self.columnCurrentCount >= self.columnButtonsEach and self.columnCurrentNum < self.columnNums - 1:
+                    self.columnCurrentCount = 0
+                    self.columnCurrentNum += 1
 
                 self.sourceButtons.append(button)
             
@@ -278,6 +300,7 @@ class Application(tk.Frame):
             self.errorLabel.pack()
             self.errorLabel.grid(
                 column = 0,
+                columnspan = self.columnNums,
                 row = 100,
                 sticky = ("N", "S", "E", "W"),
                 padx = 50,
