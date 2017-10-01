@@ -1,10 +1,11 @@
 """ A simple Studio Delegation Switcher for Livewire """
 
-__author__ = "Anthony Eden"
-__copyright__ = "Copyright 2017, Anthony Eden / Media Realm"
-__credits__ = ["Anthony Eden"]
-__license__ = "GPL"
-__version__ = "1.4"
+__product__     = "Livewire Simple Delegation Switcher"
+__author__      = "Anthony Eden"
+__copyright__   = "Copyright 2017, Anthony Eden / Media Realm"
+__credits__     = ["Anthony Eden"]
+__license__     = "GPL"
+__version__     = "1.4.0"
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/libs")
@@ -16,6 +17,8 @@ import Tkinter as tk
 import tkMessageBox
 from functools import partial
 import math
+import requests
+import thread
 
 class Application(tk.Frame):
 
@@ -50,6 +53,11 @@ class Application(tk.Frame):
 
     # Which column are we currently rendering?
     columnCurrentNum = 0
+
+    # Should we automatically check for version updates when the app starts up?
+    autoCheckVersion = True
+
+    newVersion = False
 
     def __init__(self, master = None):
         # Setup the application and display window
@@ -87,6 +95,10 @@ class Application(tk.Frame):
         
         self.setupMainInterface()
 
+        if self.autoCheckVersion is True:
+            # Check for version updates in another thread
+            thread.start_new_thread(self.versionCheck, ())
+
     def setupConfig(self):
         # Reads the 'config.json' file and stores the details in this class
         config = self.setupConfigRead('config.json')
@@ -102,6 +114,9 @@ class Application(tk.Frame):
 
         if "Title" in config:
             self.titleLabel = config['Title']
+        
+        if "CheckUpdatesAuto" in config and config['CheckUpdatesAuto'] is False:
+            self.autoCheckVersion = False
 
         for source in config['Sources']:
             if source['SourceNum'][:4] == "sip:":
@@ -229,6 +244,7 @@ class Application(tk.Frame):
         # Create the main menu
         menubar = tk.Menu()
         menubar.add_command(label = "About", command = self.about)
+        menubar.add_command(label = "Updates", command = self.updates)
         menubar.add_command(label = "Quit!", command = self.close)
         self.top.config(menu = menubar)
 
@@ -288,7 +304,7 @@ class Application(tk.Frame):
         else:
             self.LWRP.setDestination(self.LWRP_OutputChannel, self.LWRP_Sources[sourceNum]['LWMulticastNumber'])
     
-    def setErrorMessage(self, message = None):
+    def setErrorMessage(self, message = None, mode = "replace"):
         # Error Message Label
         
         if self.errorLabel is None:
@@ -311,8 +327,10 @@ class Application(tk.Frame):
                 pady = 5
             )
 
-        else:
+        elif mode == "replace":
             self.errorLabel.config(text = message)
+        elif mode == "append":
+            self.errorLabel.config(text = self.errorLabel.cget("text") + "\r\n" + message)
 
     def about(self):
         variable = tkMessageBox.showinfo('Livewire Simple Delegation Switcher', 'Livewire Simple Delegation Switcher\nCreated by Anthony Eden (http://mediarealm.com.au/)\nVersion: ' + __version__)
@@ -323,6 +341,54 @@ class Application(tk.Frame):
             self.LWRP.stop()
         
         self.root.destroy()
+
+    def updates(self):
+        if self.autoCheckVersion is False:
+            # Send a check for new updates
+            self.versionCheck("popup")
+
+        elif self.newVersion is True:
+            variable = tkMessageBox.showinfo('Software Updates', 'You currently have version v' + __version__ + '\r\nVersion v' + self.newVersionNum + ' is available\r\nDownload website: ' + self.newVersionURL)
+        else:
+            variable = tkMessageBox.showinfo('Software Updates', 'You currently have the latest version v ' + __version__)
+
+    def versionCheck(self, mode = "toolbar"):
+        # This simple version checker will prompt the user to update if required
+        r_data = {
+            'version': __version__,
+            'product': __product__
+        }
+
+        try:
+            r_version = requests.post("http://api.mediarealm.com.au/versioncheck/", data = r_data)
+            r_version_response = r_version.json()
+
+            self.autoCheckVersion = True
+
+            if r_version_response['status'] == "update-available" and mode == "toolbar":
+                self.setErrorMessage(r_version_response['message'], "append")
+                self.newVersion = True
+                self.newVersionNum = r_version_response['version_latest']
+                self.newVersionText = r_version_response['message']
+                self.newVersionURL = r_version_response['url_download']
+
+            elif r_version_response['status'] == "update-available" and mode == "popup":
+                self.newVersion = True
+                self.newVersionNum = r_version_response['version_latest']
+                self.newVersionText = r_version_response['message']
+                self.newVersionURL = r_version_response['url_download']
+                self.updates()
+            
+            elif mode == "popup":
+                self.newVersion = False
+                self.updates()
+            
+            else:
+                self.newVersion = False
+            
+        except Exception, e:
+            print "ERROR Checking for Updates:", e
+
 
 if __name__ == "__main__":
     app = Application()

@@ -4,6 +4,7 @@
     "DevicePassword": "",
     "DeviceOutputNum": 1,
     "Columns": 1,
+    "CheckUpdatesAuto": true,
     "Sources": [
         {
             "Name": "Studio A",
