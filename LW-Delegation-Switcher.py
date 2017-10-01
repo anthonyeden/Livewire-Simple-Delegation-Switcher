@@ -126,7 +126,6 @@ class Application(tk.Frame):
         if "Columns" in config:
             self.columnNums = int(config['Columns'])
             self.columnButtonsEach = int(math.ceil(len(self.LWRP_Sources) / self.columnNums))
-            print self.columnButtonsEach
         
         return True
     
