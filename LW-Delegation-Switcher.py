@@ -40,7 +40,7 @@ class Application(tk.Frame):
     LWRP_Sources = []
 
     # How many columns do we want?
-    columnsNum = 1
+    columnNums = 1
 
     # How many buttons in each column?
     columnButtonsEach = 0
@@ -201,12 +201,17 @@ class Application(tk.Frame):
         self.top.rowconfigure(0, weight = 1)
         self.top.columnconfigure(0, weight = 1)
         
+        if self.columnNums > 1:
+            wrap = None
+        else:
+            wrap = 400
+
         # Title Label
         titleLabel = tk.Label(
             self,
             text = str(self.titleLabel),
             font = ("Arial", 24, "bold"),
-            wraplength = 400
+            wraplength = wrap
         )
         titleLabel.pack()
         titleLabel.grid(
