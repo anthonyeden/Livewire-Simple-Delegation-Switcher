@@ -12,9 +12,10 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/libs")
 import json
 from LWRPClient import LWRPClient
 import AxiaLivewireAddressHelper
-import tkinter as tk
-from tkinter import messagebox
+import Tkinter as tk
+import tkMessageBox
 from functools import partial
+import math
 
 class Application(tk.Frame):
 
@@ -287,7 +288,7 @@ class Application(tk.Frame):
             self.errorLabel.config(text = message)
 
     def about(self):
-        variable = messagebox.showinfo('Livewire Simple Delegation Switcher', 'Livewire Simple Delegation Switcher\nCreated by Anthony Eden (http://mediarealm.com.au/)\nVersion: ' + __version__)
+        variable = tkMessageBox.showinfo('Livewire Simple Delegation Switcher', 'Livewire Simple Delegation Switcher\nCreated by Anthony Eden (http://mediarealm.com.au/)\nVersion: ' + __version__)
 
     def close(self):
         # Terminate the application
