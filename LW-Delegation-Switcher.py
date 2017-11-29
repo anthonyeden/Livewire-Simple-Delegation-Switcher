@@ -200,13 +200,17 @@ class Application(tk.Frame):
                 return destination['attributes']['address']
 
             elif int(destination['num']) == destinationNumber:
-                    return 0
-        
+                return None
+
         return False
 
     def callbackOutputsLWRP(self, data):
         # Find the current status of the output
-        self.LWRP_CurrentOutput = self.findOutputLWRP(data, self.LWRP_OutputChannel)
+        newSource = self.findOutputLWRP(data, self.LWRP_OutputChannel)
+
+        if newSource is not None and newSource is not False:
+            self.LWRP_CurrentOutput = newSource
+
         self.sourceBtnUpdate()
     
     def setupMainInterface(self):
@@ -256,10 +260,9 @@ class Application(tk.Frame):
         for sourceNum, sourceData in enumerate(self.LWRP_Sources):
             self.top.rowconfigure(self.columnCurrentCount + 1, weight = 1, pad = 20)
             
-            if sourceNum in self.sourceButtons:
+            if len(self.sourceButtons) >= sourceNum + 1:
                 # Modify an existing button
-                button = self.sourceButtons
-                button.config("bg", "blue")
+                button = self.sourceButtons[sourceNum]
 
             else:
                 # Setup a new button
@@ -286,8 +289,8 @@ class Application(tk.Frame):
                     self.columnCurrentNum += 1
 
                 self.sourceButtons.append(button)
-            
-            if self.LWRP_CurrentOutput == sourceData['LWSipAddress']:
+
+            if sourceData['LWSipAddress'] is not None and self.LWRP_CurrentOutput == sourceData['LWSipAddress']:
                 # This channel is currently selected - SIP
                 button.config(bg = "#FF0000", fg = "#FFFFFF")
             elif sourceData['LWNumber'] is not None and self.LWRP_CurrentOutput == sourceData['LWNumber']:
@@ -299,10 +302,21 @@ class Application(tk.Frame):
     
     def sourceBtnPress(self, sourceNum):
         # Immediatly trigger a change to the destination/output
-        if self.LWRP_Sources[sourceNum]['LWSipAddress'] is not None:
+        if self.LWRP is None:
+            # No active connection to LWRP Device
+            self.setErrorMessage("Cannot change destination to button #"+str(sourceNum)+" - no connection to LWRP Device ")
+
+        elif self.LWRP_Sources[sourceNum]['LWSipAddress'] is not None:
+            # Sip-based addressing
             self.LWRP.setDestination(self.LWRP_OutputChannel, self.LWRP_Sources[sourceNum]['LWSipAddress'])
-        else:
+
+        elif self.LWRP_Sources[sourceNum]['LWMulticastNumber'] is not None:
+            # Multicast-based addressing
             self.LWRP.setDestination(self.LWRP_OutputChannel, self.LWRP_Sources[sourceNum]['LWMulticastNumber'])
+
+        else:
+            # Invalid address
+            self.setErrorMessage("Cannot change destination - Invalid source number specified for button #" + str(sourceNum))
     
     def setErrorMessage(self, message = None, mode = "replace"):
         # Error Message Label
