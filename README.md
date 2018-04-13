@@ -26,6 +26,29 @@ This software has been developed by Anthony Eden (https://mediarealm.com.au/).
 
 If all has gone well, you'll now be able to switch the source to your destination. The source highlighted in "Red" is the currently active source.
 
+# GPIO Support
+
+There are two ways you can use Livewire GPIO within this app:
+
+1. GPI Inputs
+2. GPIO Output Triggers
+
+You can use these two features together, or separately.
+
+## GPI Inputs
+
+You can configure this switcher to be controlled via the GPI pins on a single Livewire device. It's an input - essentially a way of controlling the switcher from external hardware. There's a 1:1 relationship between GPI pins and Switcher Buttons in this app. Whenever a pin is pulled low, the configured button in the lwSDS app is selected, changing the destination audio.
+
+To configure this, configure global options 'GPI_DeviceIP' and 'GPI_DevicePassword', and source options 'GPI_SwitchPort' and 'GPI_SwitchPin'.
+
+If you don't need this option, delete the lines with 'GPI_DeviceIP' and 'GPI_DevicePassword' from the config file.
+
+## GPIO Output Triggers
+
+Output Triggers are used to send GPIO changes when a button is selected. Think of it as an output from this app, which is only sent whenever you press a button.
+
+For configuration options, see the file '[config-sample-gpiotriggers.json'](https://github.com/anthonyeden/Livewire-Simple-Delegation-Switcher/blob/master/config-sample-gpiotriggers.json).
+
 ## License
 
 This software has been released as open source software. You're free to use and modify this software, but no liability can be accepted by the developer.
