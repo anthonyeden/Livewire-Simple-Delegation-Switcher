@@ -1,0 +1,57 @@
+{
+    "Title": "Livewire Simple Delegation Switcher",
+    "DeviceIP": "192.168.0.15",
+    "DevicePassword": "",
+    "DeviceOutputNum": 1,
+    "Columns": 1,
+    "CheckUpdatesAuto": true,
+    "Sources": [
+        {
+            "Name": "Studio A",
+            "SourceNum": "101",
+            "TriggerGPIO": [
+                {
+                    "DeviceIP": "192.168.0.15",
+                    "Type": "GPO",
+                    "Port": 1,
+                    "Pin": 1,
+                    "State": "low"
+                },
+                {
+                    "DeviceIP": "192.168.0.15",
+                    "Type": "GPI",
+                    "Port": 1,
+                    "Pin": 3,
+                    "State": "low"
+                }
+            ]
+        },
+        {
+            "Name": "Studio B",
+            "SourceNum": "201",
+            "TriggerGPIO": [
+                {
+                    "DeviceIP": "192.168.0.15",
+                    "Type": "GPO",
+                    "Port": 1,
+                    "Pin": 1,
+                    "State": "low"
+                },
+                {
+                    "DeviceIP": "1192.168.0.15",
+                    "Type": "GPI",
+                    "Port": 1,
+                    "Pin": 3,
+                    "State": "low"
+                },
+                {
+                    "DeviceIP": "1192.168.0.16",
+                    "Type": "GPO",
+                    "Port": 1,
+                    "Pin": 5,
+                    "State": "low"
+                }
+            ]
+        }
+    ]
+}

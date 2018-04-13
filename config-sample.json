@@ -5,6 +5,8 @@
     "DeviceOutputNum": 1,
     "Columns": 1,
     "CheckUpdatesAuto": true,
+    "GPI_DeviceIP": "192.168.0.15",
+    "GPI_DevicePassword": "",
     "Sources": [
         {
             "Name": "Studio A",
@@ -29,6 +31,18 @@
         {
             "Name": "xNode SIP Input",
             "SourceNum": "sip:2@192.168.0.15"
+        },
+        {
+            "Name": "GPI Triggered Input (Port 1, Pin 1)",
+            "SourceNum": "800",
+            "GPI_SwitchPort": 1,
+            "GPI_SwitchPin": 1
+        },
+        {
+            "Name": "GPI Triggered Input (Port 1, Pin 2)",
+            "SourceNum": "801",
+            "GPI_SwitchPort": 1,
+            "GPI_SwitchPin": 2
         }
     ]
 }

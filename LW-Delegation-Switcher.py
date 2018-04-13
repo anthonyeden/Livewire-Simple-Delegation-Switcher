@@ -33,6 +33,8 @@ class Application(tk.Frame):
 
     # Store the Livewire Routing Protocol (LWRP) client connection here
     LWRP = None
+    LWRP_GPI = None
+    LWRP_GPIO_Triggers = {}
 
     # Configuration parameters for the communication with the Device
     LWRP_IpAddress = None
@@ -41,6 +43,11 @@ class Application(tk.Frame):
     LWRP_OutputChannel = None
     LWRP_CurrentOutput = None
     LWRP_Sources = []
+
+    # Configuration parameters for the communication with the Input GPI Device
+    LWRP_GPI_IpAddress = None
+    LWRP_GPI_PortNumber = 93
+    LWRP_GPI_Password = None
 
     # How many columns do we want?
     columnNums = 1
@@ -102,7 +109,7 @@ class Application(tk.Frame):
     def setupConfig(self):
         # Reads the 'config.json' file and stores the details in this class
         config = self.setupConfigRead('config.json')
-        
+
         if config is False:
             return "Cannot parse configuration file 'config.json'"
 
@@ -114,9 +121,15 @@ class Application(tk.Frame):
 
         if "Title" in config:
             self.titleLabel = config['Title']
-        
+
         if "CheckUpdatesAuto" in config and config['CheckUpdatesAuto'] is False:
             self.autoCheckVersion = False
+
+        if "GPI_DeviceIP" in config and config['GPI_DeviceIP'] is not None:
+            self.LWRP_GPI_IpAddress = config['GPI_DeviceIP']
+
+        if "GPI_DevicePassword" in config and config['GPI_DevicePassword'] is not None:
+            self.LWRP_GPI_Password = config['GPI_DevicePassword']
 
         for source in config['Sources']:
             if source['SourceNum'][:4] == "sip:":
@@ -125,7 +138,8 @@ class Application(tk.Frame):
                         "ButtonLabel": source['Name'],
                         "LWNumber": None,
                         "LWMulticastNumber": None,
-                        "LWSipAddress": source['SourceNum']
+                        "LWSipAddress": source['SourceNum'],
+                        "GPIOTriggers": []
                     }
                 )
             else:
@@ -134,10 +148,50 @@ class Application(tk.Frame):
                         "ButtonLabel": source['Name'],
                         "LWNumber": int(source['SourceNum']),
                         "LWMulticastNumber": AxiaLivewireAddressHelper.streamNumToMulticastAddr(source['SourceNum']),
-                        "LWSipAddress": None
+                        "LWSipAddress": None,
+                        "GPIOTriggers": []
                     }
                 )
-        
+
+            if "GPI_SwitchPort" in source and "GPI_SwitchPin" in source:
+                if int(source['GPI_SwitchPin']) >= 1 and int(source['GPI_SwitchPin']) <= 5:
+                    self.LWRP_Sources[-1]['GPI_Port'] = int(source['GPI_SwitchPort'])
+                    self.LWRP_Sources[-1]['GPI_Pin'] = int(source['GPI_SwitchPin']) - 1
+
+            if "TriggerGPIO" in source:
+                for trigger in source['TriggerGPIO']:
+                    if "DeviceIP" not in trigger or "Type" not in trigger or "Port" not in trigger or "Pin" not in trigger or "State" not in trigger :
+                        print "GPIO trigger has not been setup correctly"
+                        continue
+                    
+                    if trigger['Type'] != "GPO" and trigger['Type'] != "GPI":
+                        print "GPIO Trigger Type must be 'GPO' or 'GPI'"
+                        continue
+                    
+                    if trigger['State'] != "low" and trigger['State'] != "high":
+                        print "GPIO Trigger State must be 'low' or 'high'"
+                        continue
+
+                    if trigger['DeviceIP'] not in self.LWRP_GPIO_Triggers:
+                        self.LWRP_GPIO_Triggers[trigger['DeviceIP']] = {
+                            "Connection": None,
+                            "DeviceIP": trigger['DeviceIP'],
+                            "DevicePort": 93,
+                            "DevicePassword": ""
+                        }
+
+                        if "DevicePassword" in trigger:
+                            self.LWRP_GPIO_Triggers[trigger['DeviceIP']]["DevicePassword"] = trigger['DevicePassword']
+
+                    self.LWRP_Sources[-1]['GPIOTriggers'].append({
+                        "DeviceIP": trigger['DeviceIP'],
+                        "Type": trigger['Type'],
+                        "Port": int(trigger['Port']),
+                        "Pin": int(trigger['Pin']),
+                        "State": trigger['State']
+                    })
+
+
         if "Columns" in config:
             self.columnNums = int(config['Columns'])
             self.columnButtonsEach = int(math.ceil(len(self.LWRP_Sources) / self.columnNums))
@@ -182,6 +236,40 @@ class Application(tk.Frame):
 
         self.LWRP.destinationDataSub(self.callbackOutputsLWRP)
 
+        if self.LWRP_IpAddress == self.LWRP_GPI_IpAddress:
+            # Reuse audio destination LWRP device for GPI
+            self.LWRP_GPI = self.LWRP
+        elif self.LWRP_IpAddress is not None:
+            try:
+                # Create new connection for GPI device
+                self.LWRP_GPI = LWRPClient(self.LWRP_GPI_IpAddress, self.LWRP_GPI_PortNumber)
+            except Exception, e:
+                print "EXCEPTION:", e
+                return (False, "Cannot connect to GPI LiveWire device")
+            
+            try:
+                self.LWRP_GPI.login(self.LWRP_GPI_Password)
+            except Exception, e:
+                print "EXCEPTION:", e
+                return (False, "Cannot login to GPI device")
+
+        if self.LWRP_GPI is not None:
+            self.LWRP_GPI.GPIDataSub(self.callbackSwitcherGPI)
+        
+        for device in self.LWRP_GPIO_Triggers:
+            try:
+                # Create new connection for GPI device
+                self.LWRP_GPIO_Triggers[device]['Connection'] = LWRPClient(self.LWRP_GPIO_Triggers[device]['DeviceIP'], self.LWRP_GPIO_Triggers[device]['DevicePort'])
+            except Exception, e:
+                print "EXCEPTION:", e
+                print "Cannot connect to GPIO Trigger LiveWire device:", device
+            
+            try:
+                self.LWRP_GPI.login(self.LWRP_GPIO_Triggers[device]['DevicePassword'])
+            except Exception, e:
+                print "EXCEPTION:", e
+                print "Cannot login to GPIO Trigger device:", device
+
         return (True, self.LWRP)
 
     def findOutputLWRP(self, destinationList, destinationNumber):
@@ -212,7 +300,16 @@ class Application(tk.Frame):
             self.LWRP_CurrentOutput = newSource
 
         self.sourceBtnUpdate()
-    
+
+    def callbackSwitcherGPI(self, data):
+        # Perform source switching based on a GPI
+        for sourceNum, source in enumerate(self.LWRP_Sources):
+            if "GPI_Port" in source and "GPI_Pin" in source and source["GPI_Port"] == int(data[0]['num']):
+                if data[0]['pin_states'][source['GPI_Pin']]['state'] == "low":
+                    # Switch when the specified pin is low
+                    self.sourceBtnPress(sourceNum)
+                    return True
+
     def setupMainInterface(self):
         # Setup the interface with a list of source select buttons
 
@@ -317,6 +414,15 @@ class Application(tk.Frame):
         else:
             # Invalid address
             self.setErrorMessage("Cannot change destination - Invalid source number specified for button #" + str(sourceNum))
+        
+        # Trigger GPIO on source changes
+        for trigger in self.LWRP_Sources[sourceNum]['GPIOTriggers']:
+            if self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'] is not None and trigger['Type'] == "GPO":
+                self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'].setGPO(trigger['Port'], trigger['Pin'], trigger['State'])
+            elif self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'] is not None and trigger['Type'] == "GPI":
+                self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'].setGPI(trigger['Port'], trigger['Pin'], trigger['State'])
+            else:
+                print "Cannot set GPIO Trigger for source number", sourceNum
     
     def setErrorMessage(self, message = None, mode = "replace"):
         # Error Message Label
@@ -353,6 +459,13 @@ class Application(tk.Frame):
         # Terminate the application
         if self.LWRP is not None:
             self.LWRP.stop()
+        
+        if self.LWRP_GPI is not None:
+            self.LWRP_GPI.stop()
+        
+        for trigger in self.LWRP_GPIO_Triggers:
+            if self.LWRP_GPIO_Triggers[trigger]['Connection'] is not None:
+                self.LWRP_GPIO_Triggers[trigger]['Connection'].stop()
         
         self.root.destroy()
 
