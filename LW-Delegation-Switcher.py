@@ -239,7 +239,7 @@ class Application(tk.Frame):
         if self.LWRP_IpAddress == self.LWRP_GPI_IpAddress:
             # Reuse audio destination LWRP device for GPI
             self.LWRP_GPI = self.LWRP
-        elif self.LWRP_IpAddress is not None:
+        elif self.LWRP_GPI_IpAddress is not None:
             try:
                 # Create new connection for GPI device
                 self.LWRP_GPI = LWRPClient(self.LWRP_GPI_IpAddress, self.LWRP_GPI_PortNumber)
@@ -265,7 +265,7 @@ class Application(tk.Frame):
                 print "Cannot connect to GPIO Trigger LiveWire device:", device
             
             try:
-                self.LWRP_GPI.login(self.LWRP_GPIO_Triggers[device]['DevicePassword'])
+                self.LWRP_GPIO_Triggers[device]['Connection'].login(self.LWRP_GPIO_Triggers[device]['DevicePassword'])
             except Exception, e:
                 print "EXCEPTION:", e
                 print "Cannot login to GPIO Trigger device:", device
