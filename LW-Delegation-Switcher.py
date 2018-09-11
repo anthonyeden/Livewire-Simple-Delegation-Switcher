@@ -66,6 +66,9 @@ class Application(tk.Frame):
 
     newVersion = False
 
+    # This is a queue of events to execute in the main GUI thread
+    callbackEventQueue = []
+
     def __init__(self, master = None):
         # Setup the application and display window
         self.root = tk.Tk()
@@ -105,6 +108,9 @@ class Application(tk.Frame):
         if self.autoCheckVersion is True:
             # Check for version updates in another thread
             thread.start_new_thread(self.versionCheck, ())
+        
+        # Start executing callback events in the main thread
+        self.root.after(10, self.callbackMainThreadExecution)
 
     def setupConfig(self):
         # Reads the 'config.json' file and stores the details in this class
@@ -299,7 +305,8 @@ class Application(tk.Frame):
         if newSource is not None and newSource is not False:
             self.LWRP_CurrentOutput = newSource
 
-        self.sourceBtnUpdate()
+        # Attach this event back to the main thread
+        self.callbackEventQueue.append(self.sourceBtnUpdate)
 
     def callbackSwitcherGPI(self, data):
         # Perform source switching based on a GPI
@@ -307,8 +314,22 @@ class Application(tk.Frame):
             if "GPI_Port" in source and "GPI_Pin" in source and source["GPI_Port"] == int(data[0]['num']):
                 if data[0]['pin_states'][source['GPI_Pin']]['state'] == "low":
                     # Switch when the specified pin is low
-                    self.sourceBtnPress(sourceNum)
+                    self.callbackEventQueue.append(lambda: self.sourceBtnPress(sourceNum))
                     return True
+    
+    def callbackMainThreadExecution(self):
+        # We need to execute our callback events from the main thread
+        deleteEvents = []
+
+        # Loop and execute events
+        for eventI, event in enumerate(self.callbackEventQueue):
+            event()
+            deleteEvents.append(event)
+        
+        # Delete events that we've executed
+        self.callbackEventQueue[:] = [x for x in self.callbackEventQueue if x not in deleteEvents]
+        
+        self.root.after(10, self.callbackMainThreadExecution)
 
     def setupMainInterface(self):
         # Setup the interface with a list of source select buttons
