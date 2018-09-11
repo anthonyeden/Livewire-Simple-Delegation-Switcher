@@ -124,10 +124,21 @@ class Application(tk.Frame):
 
     def setupConfig(self):
         # Reads the 'config.json' file and stores the details in this class
-        config = self.setupConfigRead('config.json')
+        
+        if getattr(sys, 'frozen', False):
+            application_path = os.path.dirname(sys.executable)
+        elif __file__:
+            application_path = os.path.dirname(__file__)
+
+        if len(sys.argv) > 1 and os.path.isfile(os.path.join(application_path, sys.argv[1])):
+            filename = (os.path.join(application_path, sys.argv[1]))
+        else:
+            filename = 'config.json'
+        
+        config = self.setupConfigRead(filename)
 
         if config is False:
-            return "Cannot parse configuration file 'config.json'"
+            return "Cannot parse configuration file " + filename
 
         self.LWRP_IpAddress = config['DeviceIP']
         self.LWRP_OutputChannel = config['DeviceOutputNum']
