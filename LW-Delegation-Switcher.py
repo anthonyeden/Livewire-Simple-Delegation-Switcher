@@ -31,6 +31,11 @@ class Application(tk.Frame):
     # The configurable text to put at the top of the main windows
     titleLabel = "Livewire Simple Delegation Switcher"
 
+    defaultWindowWidth = None
+    defaultWindowHeight = None
+    defaultWindowPosX = None
+    defaultWindowPosY = None
+
     # Store the Livewire Routing Protocol (LWRP) client connection here
     LWRP = None
     LWRP_GPI = None
@@ -73,7 +78,7 @@ class Application(tk.Frame):
         # Setup the application and display window
         self.root = tk.Tk()
         self.root.protocol("WM_DELETE_WINDOW", self.close)
-        self.root.resizable(width = False, height = False)
+        self.root.resizable(width = True, height = True)
         
         # Setup the application's icon - very important!
         if getattr(sys, 'frozen', False):
@@ -103,6 +108,11 @@ class Application(tk.Frame):
             if connectionStatus is False:
                 self.setErrorMessage("ERROR: " + str(connection))
         
+        if self.defaultWindowWidth is not None and self.defaultWindowHeight is not None and (self.defaultWindowPosX is None or self.defaultWindowPosY is None):
+            self.root.geometry('%dx%d' % (self.defaultWindowWidth, self.defaultWindowHeight))
+        elif self.defaultWindowWidth is not None and self.defaultWindowHeight is not None and self.defaultWindowPosX is not None or self.defaultWindowPosY is not None:
+            self.root.geometry('%dx%d+%d+%d' % (self.defaultWindowWidth, self.defaultWindowHeight, self.defaultWindowPosX, self.defaultWindowPosY))
+
         self.setupMainInterface()
 
         if self.autoCheckVersion is True:
@@ -127,6 +137,14 @@ class Application(tk.Frame):
 
         if "Title" in config:
             self.titleLabel = config['Title']
+
+        if "DefaultWindowWidth" in config and "DefaultWindowHeight" in config:
+            self.defaultWindowWidth = int(config['DefaultWindowWidth'])
+            self.defaultWindowHeight = int(config['DefaultWindowHeight'])
+        
+        if "DefaultWindowPosX" in config and "DefaultWindowPosY" in config:
+            self.defaultWindowPosX = int(config['DefaultWindowPosX'])
+            self.defaultWindowPosY = int(config['DefaultWindowPosY'])
 
         if "CheckUpdatesAuto" in config and config['CheckUpdatesAuto'] is False:
             self.autoCheckVersion = False
@@ -337,6 +355,8 @@ class Application(tk.Frame):
         self.top = self.winfo_toplevel()
         self.top.rowconfigure(0, weight = 1)
         self.top.columnconfigure(0, weight = 1)
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
         
         if self.columnNums > 1:
             wrap = None
