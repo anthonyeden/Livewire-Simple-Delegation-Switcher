@@ -409,13 +409,13 @@ class Application(tk.Frame):
 
             if sourceData['LWSipAddress'] is not None and self.LWRP_CurrentOutput == sourceData['LWSipAddress']:
                 # This channel is currently selected - SIP
-                button.config(bg = "#FF0000", fg = "#FFFFFF")
+                button.config(bg = "#FF0000", fg = "#FFFFFF", activebackground = "#FF0000", activeforeground = "#FFFFFF")
             elif sourceData['LWNumber'] is not None and self.LWRP_CurrentOutput == sourceData['LWNumber']:
                 # This channel is currently selected - multicast
-                button.config(bg = "#FF0000", fg = "#FFFFFF")
+                button.config(bg = "#FF0000", fg = "#FFFFFF", activebackground = "#FF0000", activeforeground = "#FFFFFF")
             else:
                 # This channel is not currently selected
-                button.config(bg = "#FFFFFF", fg = "#000000")
+                button.config(bg = "#FFFFFF", fg = "#000000", activebackground = "#EEEEEE", activeforeground = "#000000")
     
     def sourceBtnPress(self, sourceNum):
         # Immediatly trigger a change to the destination/output
