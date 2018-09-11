@@ -329,7 +329,6 @@ class Application(tk.Frame):
             font = ("Arial", 24, "bold"),
             wraplength = wrap
         )
-        titleLabel.pack()
         titleLabel.grid(
             column = 0,
             columnspan = self.columnNums,
@@ -437,7 +436,6 @@ class Application(tk.Frame):
                 font = ("Arial", 8, "italic"),
                 wraplength = 400
             )
-            self.errorLabel.pack()
             self.errorLabel.grid(
                 column = 0,
                 columnspan = self.columnNums,
