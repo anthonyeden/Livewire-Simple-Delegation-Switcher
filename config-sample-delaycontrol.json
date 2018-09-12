@@ -1,0 +1,66 @@
+{
+    "Title": "Livewire Simple Delay Control",
+    "DeviceIP": "192.168.0.15",
+    "DevicePassword": "",
+    "DeviceOutputNum": 1,
+    "Columns": 1,
+    "CheckUpdatesAuto": true,
+    "GPI_DeviceIP": "192.168.0.15",
+    "GPI_DevicePassword": "",
+    "Sources": [
+        {
+            "Name": "Engage",
+            "SourceNum": "0",
+            "GPI_IndicationOnly": true,
+            "DisableRouteChange": true,
+            "GPI_SwitchPort": 1,
+            "GPI_SwitchPin": 4,
+            "TriggerGPIO": [
+                {
+                    "DeviceIP": "192.168.0.15",
+                    "Type": "GPO",
+                    "Port": 1,
+                    "Pin": 14,
+                    "State": "low",
+                    "Momentary": 1
+                }
+            ]
+        },
+        {
+            "Name": "Dump",
+            "SourceNum": "0",
+            "GPI_IndicationOnly": true,
+            "DisableRouteChange": true,
+            "GPI_SwitchPort": 1,
+            "GPI_SwitchPin": 1,
+            "TriggerGPIO": [
+                {
+                    "DeviceIP": "192.168.0.15",
+                    "Type": "GPO",
+                    "Port": 1,
+                    "Pin": 1,
+                    "State": "low",
+                    "Momentary": 1
+                }
+            ]
+        },
+        {
+            "Name": "Exit",
+            "SourceNum": "0",
+            "GPI_IndicationOnly": true,
+            "DisableRouteChange": true,
+            "GPI_SwitchPort": 1,
+            "GPI_SwitchPin": 2,
+            "TriggerGPIO": [
+                {
+                    "DeviceIP": "192.168.0.15",
+                    "Type": "GPO",
+                    "Port": 1,
+                    "Pin": 2,
+                    "State": "low",
+                    "Momentary": 1
+                }
+            ]
+        }
+    ]
+}

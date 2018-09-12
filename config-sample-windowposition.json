@@ -1,0 +1,36 @@
+{
+    "Title": "Livewire Simple\nDelegation Switcher",
+    "DeviceIP": "192.168.0.15",
+    "DevicePassword": "",
+    "DeviceOutputNum": 1,
+    "Columns": 1,
+    "CheckUpdatesAuto": true,
+
+    "DefaultWindowWidth": 260,
+    "DefaultWindowHeight": 440,
+    "DefaultWindowPosX": 0,
+    "DefaultWindowPosY": 0,
+
+    "Sources": [
+        {
+            "Name": "Studio A",
+            "SourceNum": "101"
+        },
+        {
+            "Name": "Studio B",
+            "SourceNum": "201"
+        },
+        {
+            "Name": "Automation Computer",
+            "SourceNum": "51"
+        },
+        {
+            "Name": "Codec",
+            "SourceNum": "81"
+        },
+        {
+            "Name": "Satellite",
+            "SourceNum": "82"
+        }
+    ]
+}

@@ -15,7 +15,8 @@
                     "Type": "GPO",
                     "Port": 1,
                     "Pin": 1,
-                    "State": "low"
+                    "State": "low",
+                    "Momentary": 1
                 },
                 {
                     "DeviceIP": "192.168.0.15",
@@ -35,7 +36,8 @@
                     "Type": "GPO",
                     "Port": 1,
                     "Pin": 1,
-                    "State": "low"
+                    "State": "low",
+                    "Momentary": 2
                 },
                 {
                     "DeviceIP": "1192.168.0.15",
