@@ -131,7 +131,7 @@ xserver-command=X -s 0 dpms
 
 #### Method 3
 
-Add these lines to /etc/xdg/lxsession/LXDE-pi/autostart:
+Add these lines to .config/lxsession/LXDE-pi/autostart:
 
 ```
 @xset s noblank 
