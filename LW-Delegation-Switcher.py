@@ -174,7 +174,9 @@ class Application(tk.Frame):
                         "LWNumber": None,
                         "LWMulticastNumber": None,
                         "LWSipAddress": source['SourceNum'],
-                        "GPIOTriggers": []
+                        "GPIOTriggers": [],
+                        "DisableRouteChange": False,
+                        "GPI_IndicationOnly": False,
                     }
                 )
             else:
@@ -184,7 +186,9 @@ class Application(tk.Frame):
                         "LWNumber": int(source['SourceNum']),
                         "LWMulticastNumber": AxiaLivewireAddressHelper.streamNumToMulticastAddr(source['SourceNum']),
                         "LWSipAddress": None,
-                        "GPIOTriggers": []
+                        "GPIOTriggers": [],
+                        "DisableRouteChange": False,
+                        "GPI_IndicationOnly": False,
                     }
                 )
 
@@ -192,6 +196,12 @@ class Application(tk.Frame):
                 if int(source['GPI_SwitchPin']) >= 1 and int(source['GPI_SwitchPin']) <= 5:
                     self.LWRP_Sources[-1]['GPI_Port'] = int(source['GPI_SwitchPort'])
                     self.LWRP_Sources[-1]['GPI_Pin'] = int(source['GPI_SwitchPin']) - 1
+
+            if "GPI_IndicationOnly" in source and source['GPI_IndicationOnly'] is True:
+                self.LWRP_Sources[-1]['GPI_IndicationOnly'] = True
+
+            if "DisableRouteChange" in source and source['DisableRouteChange'] is True:
+                self.LWRP_Sources[-1]['DisableRouteChange'] = True
 
             if "TriggerGPIO" in source:
                 for trigger in source['TriggerGPIO']:
@@ -226,6 +236,8 @@ class Application(tk.Frame):
                         "State": trigger['State']
                     })
 
+                    if "Momentary" in trigger:
+                        self.LWRP_Sources[-1]['GPIOTriggers'][-1]['Momentary'] = int(trigger['Momentary'])
 
         if "Columns" in config:
             self.columnNums = int(config['Columns'])
@@ -341,10 +353,19 @@ class Application(tk.Frame):
         # Perform source switching based on a GPI
         for sourceNum, source in enumerate(self.LWRP_Sources):
             if "GPI_Port" in source and "GPI_Pin" in source and source["GPI_Port"] == int(data[0]['num']):
-                if data[0]['pin_states'][source['GPI_Pin']]['state'] == "low":
+                if source['GPI_IndicationOnly'] is False and data[0]['pin_states'][source['GPI_Pin']]['state'] == "low":
                     # Switch when the specified pin is low
                     self.callbackEventQueue.append(lambda: self.sourceBtnPress(sourceNum))
                     return True
+
+                elif source['GPI_IndicationOnly'] is True:
+                    if len(self.sourceButtons) >= sourceNum + 1:
+                        # Change the indication only on an existing button - no source change
+                        button = self.sourceButtons[sourceNum]
+                        if data[0]['pin_states'][source['GPI_Pin']]['state'] == "low":
+                            button.config(bg = "#FF0000", fg = "#FFFFFF", activebackground = "#FF0000", activeforeground = "#FFFFFF")
+                        else:
+                            button.config(bg = "#FFFFFF", fg = "#000000", activebackground = "#EEEEEE", activeforeground = "#000000")
     
     def callbackMainThreadExecution(self):
         # We need to execute our callback events from the main thread
@@ -438,7 +459,10 @@ class Application(tk.Frame):
 
                 self.sourceButtons.append(button)
 
-            if sourceData['LWSipAddress'] is not None and self.LWRP_CurrentOutput == sourceData['LWSipAddress']:
+            if sourceData['GPI_IndicationOnly'] is True:
+                # If we're only using this button for indications, don't change the colour here
+                pass
+            elif sourceData['LWSipAddress'] is not None and self.LWRP_CurrentOutput == sourceData['LWSipAddress']:
                 # This channel is currently selected - SIP
                 button.config(bg = "#FF0000", fg = "#FFFFFF", activebackground = "#FF0000", activeforeground = "#FFFFFF")
             elif sourceData['LWNumber'] is not None and self.LWRP_CurrentOutput == sourceData['LWNumber']:
@@ -450,7 +474,11 @@ class Application(tk.Frame):
     
     def sourceBtnPress(self, sourceNum):
         # Immediatly trigger a change to the destination/output
-        if self.LWRP is None:
+        if self.LWRP_Sources[sourceNum]['DisableRouteChange'] is True:
+            # This button doesn't need to actually change any LWRP routes
+            pass
+
+        elif self.LWRP is None:
             # No active connection to LWRP Device
             self.setErrorMessage("Cannot change destination to button #"+str(sourceNum)+" - no connection to LWRP Device ")
 
@@ -470,11 +498,27 @@ class Application(tk.Frame):
         for trigger in self.LWRP_Sources[sourceNum]['GPIOTriggers']:
             if self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'] is not None and trigger['Type'] == "GPO":
                 self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'].setGPO(trigger['Port'], trigger['Pin'], trigger['State'])
+
+                if "Momentary" in trigger and trigger['State'] == "high":
+                    # Handle momentary latching of high GPO triggers
+                    self.root.after(trigger['Momentary'] * 1000, lambda: self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'].setGPO(trigger['Port'], trigger['Pin'], "low"))
+                elif "Momentary" in trigger and trigger['State'] == "low":
+                    # Handle momentary latching of low GPO triggers
+                    self.root.after(trigger['Momentary'] * 1000, lambda: self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'].setGPO(trigger['Port'], trigger['Pin'], "high"))
+
             elif self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'] is not None and trigger['Type'] == "GPI":
                 self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'].setGPI(trigger['Port'], trigger['Pin'], trigger['State'])
+
+                if "Momentary" in trigger and trigger['State'] == "high":
+                    # Handle momentary latching of high GPI triggers
+                    self.root.after(trigger['Momentary'] * 1000, lambda: self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'].setGPI(trigger['Port'], trigger['Pin'], "low"))
+                elif "Momentary" in trigger and trigger['State'] == "low":
+                    # Handle momentary latching of low GPI triggers
+                    self.root.after(trigger['Momentary'] * 1000, lambda: self.LWRP_GPIO_Triggers[trigger['DeviceIP']]['Connection'].setGPI(trigger['Port'], trigger['Pin'], "high"))
+
             else:
                 print "Cannot set GPIO Trigger for source number", sourceNum
-    
+
     def setErrorMessage(self, message = None, mode = "replace"):
         # Error Message Label
         
