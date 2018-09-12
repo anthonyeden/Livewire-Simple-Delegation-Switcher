@@ -64,6 +64,7 @@ Under some circumstances, you may also like to set option "DisableRouteChange" t
 ```
 sudo apt-get install python2 git
 git clone https://github.com/anthonyeden/Livewire-Simple-Delegation-Switcher/
+chmod +x Livewire-Simple-Delegation-Switcher/start.sh
 echo "@/home/pi/Livewire-Simple-Delegation-Switcher/start.sh" >> .config/lxsession/LXDE-pi/autostart
 cp Livewire-Simple-Delegation-Switcher/config-sample.json Livewire-Simple-Delegation-Switcher/config.json
 ``` 
